@@ -67,6 +67,29 @@ def get_note(id):
 
         return jsonify(response), 400
 
+@app.route('/notes/<int:id>', methods=['PUT'])
+def update_note(id):
+    try:
+        note = Note.query.get(id)
+        if note:
+            data = request.get_json()
+            note.title = data['title']
+            note.content = data['content']
+            db.session.commit()
+
+            response = note_schema.dump(note)
+            return jsonify(response), 200
+        else:
+            response = {
+                "error": "Note not found"
+            }
+            return jsonify(response), 404
+    except (ValueError, TypeError):
+        response = {
+            "error": "Invalid data"
+        }
+        return jsonify(response), 400
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
