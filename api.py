@@ -90,6 +90,29 @@ def update_note(id):
         }
         return jsonify(response), 400
 
+@app.route('/notes/<int:id>', methods=['DELETE'])
+def delete_note(id):
+    try:
+        note = Note.query.get(id)
+        if note:
+            db.session.delete(note)
+            db.session.commit()
+            response = {
+                "message": "Note deleted"
+            }
+            return jsonify(response), 200
+        else:
+            response = {
+                "error": "Note not found"
+            }
+            return jsonify(response), 404
+    except (ValueError, TypeError):
+        response = {
+            "error": "Invalid note ID"
+        }
+        return jsonify(response), 400
+
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
