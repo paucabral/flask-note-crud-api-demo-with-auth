@@ -77,13 +77,35 @@ def register():
 
     return jsonify(response), 201
 
+# Login
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+
+    user = User.query.filter_by(username=username).first()
+    if not user or not user.check_password(password):
+        response = {
+            "error": "Invalid username or password"
+        }
+
+        return jsonify(response), 401
+    
+    access_token = create_access_token(identity=user.id)
+    response = {
+        "access_token": access_token
+    }
+
+    return jsonify(response), 200
 
 # Create a new note
 @app.route('/notes', methods=['POST'])
+@jwt_required()
 def create_note():
     try:
         data = request.json
-        note = Note(title=data["title"], content=data["content"])
+        user_id = get_jwt_identity()
+        note = Note(user_id=user_id, title=data["title"], content=data["content"])
         db.session.add(note)
         db.session.commit()
         
@@ -100,15 +122,19 @@ def create_note():
         return jsonify(response), 400
 
 @app.route('/notes', methods=['GET'])
+@jwt_required()
 def get_notes():
-    all_notes = Note.query.all()
+    user_id = get_jwt_identity()
+    all_notes = Note.query.filter_by(user_id=user_id).all()
     response = notes_schema.dump(all_notes)
     return jsonify(response), 200
 
-@app.route('/notes/<int:id>', methods=['GET'])
-def get_note(id):
+@app.route('/notes/<int:note_id>', methods=['GET'])
+@jwt_required()
+def get_note(note_id):
     try:
-        note = Note.query.get(id)
+        user_id = get_jwt_identity()
+        note = Note.query.filter_by(id=note_id, user_id=user_id).first()
         if note:
             response = note_schema.dump(note)
             return jsonify(response), 200
@@ -124,10 +150,12 @@ def get_note(id):
 
         return jsonify(response), 400
 
-@app.route('/notes/<int:id>', methods=['PUT'])
-def update_note(id):
+@app.route('/notes/<int:note_id>', methods=['PUT'])
+@jwt_required()
+def update_note(note_id):
     try:
-        note = Note.query.get(id)
+        user_id = get_jwt_identity()
+        note = Note.query.filter_by(id=note_id, user_id=user_id).first()
         if note:
             data = request.get_json()
             note.title = data['title']
@@ -147,10 +175,12 @@ def update_note(id):
         }
         return jsonify(response), 400
 
-@app.route('/notes/<int:id>', methods=['DELETE'])
-def delete_note(id):
+@app.route('/notes/<int:note_id>', methods=['DELETE'])
+@jwt_required()
+def delete_note(note_id):
     try:
-        note = Note.query.get(id)
+        user_id = get_jwt_identity()
+        note = Note.query.filter_by(id=note_id, user_id=user_id).first()
         if note:
             db.session.delete(note)
             db.session.commit()
