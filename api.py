@@ -44,6 +44,40 @@ class NoteSchema(ma.Schema):
 note_schema = NoteSchema()
 notes_schema = NoteSchema(many=True)
 
+# Register
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.json.get('username')
+    password = request.json.get('password')
+
+    if not username or not password:
+        response = {
+            "error": "Invalid username or password"
+        }
+
+        return jsonify(response), 400
+
+    existing_user = User.query.filter_by(username=username).first()
+
+    if existing_user:
+        response = {
+            "error": "Username already exists"
+        }
+
+        return jsonify(response), 400
+
+    user = User(username=username)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
+    response = {
+        "message": "User registered successfully."
+    }
+
+    return jsonify(response), 201
+
+
 # Create a new note
 @app.route('/notes', methods=['POST'])
 def create_note():
