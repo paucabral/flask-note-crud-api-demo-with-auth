@@ -4,3 +4,4 @@ venv/*
 *.html
 *.css
 *.js
+.env
