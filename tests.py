@@ -62,7 +62,53 @@ class FlaskAppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(json.loads(response.get_data(as_text=True))), 1)
 
-    # Add similar tests for get_note, update_note, and delete_note functions
+    def test_get_note(self):
+        # Register a user and login
+        self.register_user('testuser', 'testpassword')
+        response = self.login_user('testuser', 'testpassword')
+        self.assertEqual(response.status_code, 200)
+        access_token = json.loads(response.get_data(as_text=True))['access_token']
+
+        # Create a note with the logged-in user
+        create_response = self.create_note('Test Note', 'This is a test note', access_token)
+        note_id = json.loads(create_response.get_data(as_text=True))['message'].split(":")[1].strip()
+
+        # Retrieve the created note with the access token
+        headers = {'Authorization': f'Bearer {access_token}'}
+        response = self.app.get(f'/api/notes/{note_id}', headers=headers)
+        self.assertEqual(response.status_code, 200)
+
+    def test_update_note(self):
+        # Register a user and login
+        self.register_user('testuser', 'testpassword')
+        response = self.login_user('testuser', 'testpassword')
+        self.assertEqual(response.status_code, 200)
+        access_token = json.loads(response.get_data(as_text=True))['access_token']
+
+        # Create a note with the logged-in user
+        create_response = self.create_note('Test Note', 'This is a test note', access_token)
+        note_id = json.loads(create_response.get_data(as_text=True))['message'].split(":")[1].strip()
+
+        # Update the created note with the access token
+        headers = {'Authorization': f'Bearer {access_token}'}
+        update_response = self.app.put(f'/api/notes/{note_id}', json={'title': 'Updated Note', 'content': 'Updated content'}, headers=headers)
+        self.assertEqual(update_response.status_code, 200)
+
+    def test_delete_note(self):
+        # Register a user and login
+        self.register_user('testuser', 'testpassword')
+        response = self.login_user('testuser', 'testpassword')
+        self.assertEqual(response.status_code, 200)
+        access_token = json.loads(response.get_data(as_text=True))['access_token']
+
+        # Create a note with the logged-in user
+        create_response = self.create_note('Test Note', 'This is a test note', access_token)
+        note_id = json.loads(create_response.get_data(as_text=True))['message'].split(":")[1].strip()
+
+        # Delete the created note with the access token
+        headers = {'Authorization': f'Bearer {access_token}'}
+        delete_response = self.app.delete(f'/api/notes/{note_id}', headers=headers)
+        self.assertEqual(delete_response.status_code, 200)
 
 if __name__ == '__main__':
     unittest.main()
