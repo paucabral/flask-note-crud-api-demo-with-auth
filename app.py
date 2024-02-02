@@ -11,8 +11,23 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
+# app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
+
+# Load the configuration based on the environment
+if os.environ.get('FLASK_ENV') == 'production':
+    app.config['SECRET_KEY'] = os.getenv("PROD_SECRET_KEY")
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("PROD_DATABASE_URI")
+elif os.environ.get('FLASK_ENV') == 'staging':
+    app.config['SECRET_KEY'] = os.getenv("STG_SECRET_KEY")
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("STG_DATABASE_URI")
+elif os.environ.get('FLASK_ENV') == 'test':
+    app.config['SECRET_KEY'] = os.getenv("TEST_SECRET_KEY")
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("TEST_DATABASE_URI")
+else:
+    app.config['SECRET_KEY'] = os.getenv("DEV_SECRET_KEY")
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DEV_DATABASE_URI")
+
 jwt = JWTManager(app)
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
@@ -45,7 +60,7 @@ note_schema = NoteSchema()
 notes_schema = NoteSchema(many=True)
 
 # Register
-@app.route('/register', methods=['POST'])
+@app.route('/api/register', methods=['POST'])
 def register():
     username = request.json.get('username')
     password = request.json.get('password')
@@ -78,7 +93,7 @@ def register():
     return jsonify(response), 201
 
 # Login
-@app.route('/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     username = request.json.get('username')
     password = request.json.get('password')
@@ -99,7 +114,7 @@ def login():
     return jsonify(response), 200
 
 # Create a new note
-@app.route('/notes', methods=['POST'])
+@app.route('/api/notes', methods=['POST'])
 @jwt_required()
 def create_note():
     try:
@@ -121,7 +136,7 @@ def create_note():
         
         return jsonify(response), 400
 
-@app.route('/notes', methods=['GET'])
+@app.route('/api/notes', methods=['GET'])
 @jwt_required()
 def get_notes():
     user_id = get_jwt_identity()
@@ -129,7 +144,7 @@ def get_notes():
     response = notes_schema.dump(all_notes)
     return jsonify(response), 200
 
-@app.route('/notes/<int:note_id>', methods=['GET'])
+@app.route('/api/notes/<int:note_id>', methods=['GET'])
 @jwt_required()
 def get_note(note_id):
     try:
@@ -150,7 +165,7 @@ def get_note(note_id):
 
         return jsonify(response), 400
 
-@app.route('/notes/<int:note_id>', methods=['PUT'])
+@app.route('/api/notes/<int:note_id>', methods=['PUT'])
 @jwt_required()
 def update_note(note_id):
     try:
@@ -175,7 +190,7 @@ def update_note(note_id):
         }
         return jsonify(response), 400
 
-@app.route('/notes/<int:note_id>', methods=['DELETE'])
+@app.route('/api/notes/<int:note_id>', methods=['DELETE'])
 @jwt_required()
 def delete_note(note_id):
     try:
