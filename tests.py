@@ -12,7 +12,7 @@ class FlaskAppTestCase(unittest.TestCase):
         with app.app_context():
             db.session.remove()
             db.drop_all()
-
+   
     def register_user(self, username, password):
         return self.app.post('/api/register', json={'username': username, 'password': password})
 

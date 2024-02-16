@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
+from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -11,8 +12,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-# app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-# app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
 
 # Load the configuration based on the environment
 if os.environ.get('FLASK_ENV') == 'production':
@@ -31,6 +30,7 @@ else:
 jwt = JWTManager(app)
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
+migrate = Migrate(app, db)
 CORS(app)
 
 class User(db.Model):
